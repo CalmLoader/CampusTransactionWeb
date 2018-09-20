@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- 指定Spring配置文件的Schema信息 -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <!-- 《Spring Manual》 9.6 Proxying mechanisms Note: Multiple <aop:config/>
+        sections are collapsed into a single unified auto-proxy creator at runtime,
+        which applies the strongest proxy settings that any of the <aop:config/>
+        sections (typically from different XML bean definition files) specified.
+        This also applies to the <tx:annotation-driven/> and <aop:aspectj-autoproxy/>
+        elements. To be clear: using 'proxy-target-class="true"' on <tx:annotation-driven/>,
+        <aop:aspectj-autoproxy/> or <aop:config/> elements will force the use of
+        CGLIB proxies for all three of them. -->
+
+    <!-- 开启Spring的Annotation注解处理器 -->
+    <context:annotation-config />
+
+    <!-- 自动扫描指定包及其子包下的所有Bean类 -->
+    <context:component-scan base-package="last" />
+
+    <context:property-placeholder location="classpath:db.properties"/>
+
+    <!--<bean name="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">-->
+        <!--<property name="driverClassName" value="${jdbc.driver}"/>-->
+        <!--<property name="url" value="${jdbc.url}"/>-->
+        <!--<property name="username" value="${jdbc.username}"/>-->
+        <!--<property name="password" value="${jdbc.password}"/>-->
+        <!--&lt;!&ndash;<property name="maxActive" value="30"/>&ndash;&gt;-->
+        <!--&lt;!&ndash;<property name="maxIdle" value="5"/>&ndash;&gt;-->
+    <!--</bean>-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="maxActive" value="30"/>
+        <property name="maxIdle" value="5"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <!--<property name="configLocation" value="classpath:SqlConfiguration.xml"/>-->
+        <!--<property name="transactionFactory">-->
+            <!--<bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />-->
+        <!--</property>-->
+    </bean>
+
+    <!--<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">-->
+    <!--<constructor-arg index="0"> <ref bean="sqlSessionFactory"/></constructor-arg>-->
+    <!--</bean>-->
+    <!--<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">-->
+        <!--<constructor-arg ref="sqlSessionFactory" />-->
+    <!--</bean>-->
+    <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="last.dao.UserMapper" />
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+    <bean id="goodItemsMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="last.dao.GoodItemsMapper" />
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+    <!--<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">-->
+        <!--&lt;!&ndash; 这里的basePackage 指定了dao层接口路劲，这里的dao接口不用自己实现 &ndash;&gt;-->
+        <!--<property name="basePackage" value="last.dao" />-->
+        <!--&lt;!&ndash; 如果只有一个数据源的话可以不用指定，但是如果有多个数据源的话必须要指定 &ndash;&gt;-->
+        <!--&lt;!&ndash; <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" /> &ndash;&gt;-->
+        <!--&lt;!&ndash;直接指定了sqlsessionTemplate名称，这个和上面的其实是一样的 &ndash;&gt;-->
+        <!--&lt;!&ndash; <property name="sqlSessionTemplateBeanName" value="sqlSession" /> &ndash;&gt;-->
+    <!--</bean>-->
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <!-- 使用全注释事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager" />
+
+</beans>
